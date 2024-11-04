@@ -31,7 +31,7 @@ Options:
 
 ## Todo
 
-- Make it faster (currently at `~500ms`).
+- Make it faster (currently at `~270ms`).
 - Find a better way to match the pattern to the name when printing the result.
 
 ## Benchmarks
@@ -44,8 +44,8 @@ The benchmarks were run using [Hyperfine](https://github.com/sharkdp/hyperfine).
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `swhich pnpm` | 471.8 ± 3.2 | 468.4 | 477.9 | 4.50 ± 0.12 |
-| `where pnpm` | 104.9 ± 2.6 | 103.3 | 116.8 | 1.00 |
+| `swhich pnpm` | 274.3 ± 4.0 | 264.7 | 279.0 | 2.55 ± 0.09 |
+| `where pnpm` | 107.6 ± 3.7 | 104.2 | 119.9 | 1.00 |
 
 ### Machine B
 

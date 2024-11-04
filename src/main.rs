@@ -19,23 +19,22 @@
  */
 extern crate clap;
 extern crate colored;
+extern crate is_executable;
 extern crate jaro_winkler;
 extern crate rayon;
 
 use clap::Parser;
 use colored::*;
+use is_executable::IsExecutable;
 use jaro_winkler::jaro_winkler;
 use rayon::prelude::*;
 use std::{
     collections::BTreeSet,
     env, fs,
-    path::{Path, PathBuf, MAIN_SEPARATOR},
+    path::{PathBuf, MAIN_SEPARATOR},
     process::exit,
     sync::{Arc, Mutex},
 };
-
-#[cfg(windows)]
-const EXTENSIONS: [&str; 8] = ["exe", "sh", "bat", "cmd", "com", "ps1", "vbs", "py"];
 
 #[derive(Parser)]
 #[command(author,version,about,long_about=None)]
@@ -105,7 +104,7 @@ fn super_which(paths: Vec<PathBuf>, pattern: String, color: colored::Color) {
         for entry in fs::read_dir(path).unwrap() {
             let entry = entry.unwrap();
 
-            if !is_executable(&entry.path()) {
+            if !entry.path().is_executable() {
                 continue;
             }
 
@@ -124,30 +123,6 @@ fn super_which(paths: Vec<PathBuf>, pattern: String, color: colored::Color) {
     let found = found.lock().unwrap();
     for exe in found.iter() {
         println!("{}", highlight_text(exe, &pattern, color));
-    }
-}
-
-fn is_executable(path: &Path) -> bool {
-    if !path.exists() || !path.is_file() {
-        return false;
-    }
-
-    #[cfg(unix)]
-    {
-        let p = path.metadata().unwrap().permissions();
-        p.readonly() || p.execute()
-    }
-
-    #[cfg(not(unix))]
-    {
-        EXTENSIONS.contains(
-            &path
-                .extension()
-                .and_then(|ext| ext.to_str())
-                .unwrap_or("")
-                .to_lowercase()
-                .as_str(),
-        )
     }
 }
 
