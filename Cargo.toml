@@ -1,0 +1,22 @@
+[package]
+name = "superwhich"
+description = "Cross-platform smart which alternative"
+version = "1.0.0"
+edition = "2021"
+homepage = "https://github.com/DarkCeptor44/superwhich"
+repository = "https://github.com/DarkCeptor44/superwhich"
+readme = "README.md"
+authors = ["DarkCeptor44"]
+license = "GPL-3.0-or-later"
+keywords = ["alternative", "command", "find", "which", "pattern", "smart"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+jaro_winkler = "0.1"
+rayon = "1"
+colored = "2"
+
+[[bin]]
+name = "swhich"
+path = "src/main.rs"
