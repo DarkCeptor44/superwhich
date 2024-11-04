@@ -8,7 +8,7 @@ repository = "https://github.com/DarkCeptor44/superwhich"
 readme = "README.md"
 authors = ["DarkCeptor44"]
 license = "GPL-3.0-or-later"
-keywords = ["alternative", "command", "find", "which", "pattern", "smart"]
+keywords = ["alternative", "command", "find", "which", "smart"]
 categories = ["command-line-utilities"]
 
 [dependencies]
