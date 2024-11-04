@@ -11,7 +11,8 @@
 
 ## Usage
 
-![usage](usage.png)
+![usage-windows](assets/usage-windows.png)
+![usage-linux](assets/usage-linux.png)
 
 ```sh
 $ swhich -h
@@ -31,7 +32,7 @@ Options:
 
 ## Todo
 
-- Make it faster (currently at `~270ms`).
+- Make it faster (currently at `~270ms` on Windows).
 - Find a better way to match the pattern to the name when printing the result.
 
 ## Benchmarks
@@ -51,7 +52,10 @@ The benchmarks were run using [Hyperfine](https://github.com/sharkdp/hyperfine).
 
 - ARM64, 1GB RAM, Orange Pi Zero2, Debian 12.
 
-*coming soon*
+| Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
+|:---|---:|---:|---:|---:|
+| `swhich lookfor` | 17.4 ± 1.2 | 16.2 | 20.3 | 6.41 ± 0.71 |
+| `which lookfor` | 2.7 ± 0.2 | 2.3 | 4.5 | 1.00 |
 
 ## License
 
