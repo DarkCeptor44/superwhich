@@ -82,7 +82,7 @@ fn main() {
     if args.print_time {
         println!(
             "\nElapsed: {}",
-            format!("{:.2?}", elapsed).color(color).bold()
+            format!("{:.3?}", elapsed).color(color).bold()
         );
     }
 }
