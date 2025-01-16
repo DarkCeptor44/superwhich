@@ -17,12 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-extern crate clap;
-extern crate colored;
-extern crate is_executable;
-extern crate jaro_winkler;
-extern crate rayon;
-
 use clap::Parser;
 use colored::*;
 use is_executable::IsExecutable;
