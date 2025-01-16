@@ -44,6 +44,14 @@ struct App {
     color: String,
 
     #[arg(
+        short = 'j',
+        long,
+        help = "Jaro-Winkler distance threshold (0.0 to 1.0)",
+        default_value_t = 0.8
+    )]
+    threshold: f64,
+
+    #[arg(
         short = 't',
         long,
         help = "Print time elapsed",
@@ -75,7 +83,7 @@ fn main() {
     }))
     .collect();
 
-    super_which(paths, args.pattern.to_lowercase(), color);
+    super_which(paths, args.pattern.to_lowercase(), args.threshold, color);
     let elapsed = now.elapsed();
 
     if args.print_time {
@@ -86,7 +94,7 @@ fn main() {
     }
 }
 
-fn super_which(paths: Vec<PathBuf>, pattern: String, color: colored::Color) {
+fn super_which(paths: Vec<PathBuf>, pattern: String, threshold: f64, color: colored::Color) {
     let found: BTreeSet<PathInfo> = paths
         .par_iter()
         .fold(BTreeSet::new, |mut acc, path| {
@@ -103,7 +111,8 @@ fn super_which(paths: Vec<PathBuf>, pattern: String, color: colored::Color) {
 
                 let name = entry.file_name().to_string_lossy().to_string();
                 let name_lower = name.to_lowercase();
-                if name_lower.contains(&pattern) || jaro_winkler(&name_lower, &pattern) >= 0.8 {
+                if name_lower.contains(&pattern) || jaro_winkler(&name_lower, &pattern) >= threshold
+                {
                     acc.insert(PathInfo {
                         path_str: entry.path().to_string_lossy().to_string(),
                         stem: entry.path().parent().unwrap().to_string_lossy().to_string(),
