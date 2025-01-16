@@ -24,15 +24,16 @@ Arguments:
   <PATTERN>  The search pattern
 
 Options:
-  -c, --color <COLOR>  Color of the highlighted text (off for no color) [default: blue]
-  -t, --print-time     Print time elapsed
-  -h, --help           Print help
-  -V, --version        Print version
+  -c, --color <COLOR>          Color of the highlighted text (off for no color) [default: blue]
+  -j, --threshold <THRESHOLD>  Jaro-Winkler distance threshold (0.0 to 1.0) [default: 0.8]
+  -t, --print-time             Print time elapsed
+  -h, --help                   Print help
+  -V, --version                Print version
 ```
 
 ## Todo
 
-- Make it faster (currently at `~270ms` on Windows).
+- Make it faster (currently at `~240ms` on Windows).
 - Find a better way to match the pattern to the name when printing the result.
 
 ## Benchmarks
@@ -45,8 +46,8 @@ The benchmarks were run using [Hyperfine](https://github.com/sharkdp/hyperfine).
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `swhich pnpm` | 274.3 ± 4.0 | 264.7 | 279.0 | 2.55 ± 0.09 |
-| `where pnpm` | 107.6 ± 3.7 | 104.2 | 119.9 | 1.00 |
+| `where pnpm` | 98.9 ± 1.0 | 97.4 | 101.1 | 1.00 |
+| `swhich pnpm` | 235.1 ± 4.2 | 229.7 | 243.8 | 2.38 ± 0.05 |
 
 ### Machine B
 
@@ -54,8 +55,8 @@ The benchmarks were run using [Hyperfine](https://github.com/sharkdp/hyperfine).
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `swhich lookfor` | 17.4 ± 1.2 | 16.2 | 20.3 | 6.41 ± 0.71 |
-| `which lookfor` | 2.7 ± 0.2 | 2.3 | 4.5 | 1.00 |
+| `which lookfor` | 2.2 ± 0.2 | 1.9 | 3.7 | 1.00 |
+| `swhich lookfor` | 16.2 ± 0.3 | 15.7 | 17.1 | 7.21 ± 0.71 |
 
 ## License
 
