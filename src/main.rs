@@ -27,7 +27,6 @@ use std::{
     env, fs,
     path::{PathBuf, MAIN_SEPARATOR},
     process::exit,
-    sync::{Arc, Mutex},
 };
 
 #[derive(Parser)]
@@ -88,33 +87,37 @@ fn main() {
 }
 
 fn super_which(paths: Vec<PathBuf>, pattern: String, color: colored::Color) {
-    let found: Arc<Mutex<BTreeSet<PathInfo>>> = Arc::new(Mutex::new(BTreeSet::new()));
-
-    paths.par_iter().for_each(|path| {
-        if !path.exists() {
-            return;
-        }
-
-        for entry in fs::read_dir(path).unwrap() {
-            let entry = entry.unwrap();
-
-            if !entry.path().is_executable() {
-                continue;
+    let found: BTreeSet<PathInfo> = paths
+        .par_iter()
+        .fold(BTreeSet::new, |mut acc, path| {
+            if !path.exists() {
+                return acc;
             }
 
-            let name = entry.file_name().to_string_lossy().to_string();
-            let name_lower = name.to_lowercase();
-            if name_lower.contains(&pattern) || jaro_winkler(&name_lower, &pattern) >= 0.8 {
-                found.lock().unwrap().insert(PathInfo {
-                    path_str: entry.path().to_string_lossy().to_string(),
-                    stem: entry.path().parent().unwrap().to_string_lossy().to_string(),
-                    name,
-                });
-            }
-        }
-    });
+            for entry in fs::read_dir(path).unwrap() {
+                let entry = entry.unwrap();
 
-    let found = found.lock().unwrap();
+                if !entry.path().is_executable() {
+                    continue;
+                }
+
+                let name = entry.file_name().to_string_lossy().to_string();
+                let name_lower = name.to_lowercase();
+                if name_lower.contains(&pattern) || jaro_winkler(&name_lower, &pattern) >= 0.8 {
+                    acc.insert(PathInfo {
+                        path_str: entry.path().to_string_lossy().to_string(),
+                        stem: entry.path().parent().unwrap().to_string_lossy().to_string(),
+                        name,
+                    });
+                }
+            }
+            acc
+        })
+        .reduce(BTreeSet::new, |mut a, b| {
+            a.extend(b);
+            a
+        });
+
     for exe in found.iter() {
         println!("{}", highlight_text(exe, &pattern, color));
     }
