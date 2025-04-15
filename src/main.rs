@@ -1,8 +1,41 @@
+//! # superwhich
+//!
+//! Smart `which` alternative
+//!
+//! ## Installation
+//!
+//! ```bash
+//! cargo install superwhich
+//!
+//! # or
+//! cargo binstall superwhich
+//! ```
+//!
+//! ## Usage
+//!
+//! ```bash
+//! $ swhich -h
+//! Cross-platform smart which alternative
+//!
+//! Usage: swhich [OPTIONS] <PATTERN>
+//!
+//! Arguments:
+//!   <PATTERN>  The search pattern
+//!
+//! Options:
+//!   -c, --color <COLOR>          Color of the highlighted text (off or set `NO_COLOR` env var to disable) [default: blue]
+//!   -T, --threshold <THRESHOLD>  String similarity threshold (0.0 to 1.0) [default: 0.8]
+//!   -t, --print-time             Print time elapsed
+//!   -h, --help                   Print help
+//!   -V, --version                Print version
+//! ```
+
 #![forbid(unsafe_code)]
+#![warn(clippy::pedantic)]
 
 /**
  * superwhich: smart which alternative
- * Copyright (C) 2024 DarkCeptor44
+ * Copyright (C) 2024 `DarkCeptor44`
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +50,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+use anyhow::{anyhow, Result};
 use clap::Parser;
-use colored::*;
-use is_executable::IsExecutable;
-use jaro_winkler::jaro_winkler;
-use rayon::prelude::*;
+use colored::{Color, Colorize};
 use std::{
-    collections::BTreeSet,
-    env, fs,
-    path::{PathBuf, MAIN_SEPARATOR},
+    env::{current_exe, split_paths, var_os},
+    path::PathBuf,
     process::exit,
+    time::Instant,
 };
+use superwhich::{find_executables, highlight_text};
 
 #[derive(Parser)]
 #[command(author,version,about,long_about=None)]
@@ -38,128 +70,77 @@ struct App {
     #[arg(
         short,
         long,
-        help = "Color of the highlighted text (off for no color)",
+        help = "Color of the highlighted text (off or set `NO_COLOR` env var to disable)",
         default_value = "blue"
     )]
     color: String,
 
     #[arg(
-        short = 'j',
+        short = 'T',
         long,
-        help = "Jaro-Winkler distance threshold (0.0 to 1.0)",
-        default_value_t = 0.8
+        help = "String similarity threshold (0.0 to 1.0)",
+        default_value_t = 0.7
     )]
     threshold: f64,
 
-    #[arg(
-        short = 't',
-        long,
-        help = "Print time elapsed",
-        default_value_t = false
-    )]
+    #[arg(short = 't', long, help = "Print time elapsed", default_value_t)]
     print_time: bool,
 }
 
-#[derive(PartialEq, Eq, Hash)]
-struct PathInfo {
-    path_str: String,
-    stem: String,
-    name: String,
+fn main() {
+    if let Err(e) = run() {
+        eprintln!(
+            "{} {}",
+            format!("{}:", exe_name()).red().bold(),
+            e.to_string().red()
+        );
+        exit(1);
+    }
 }
 
-fn main() {
+fn exe_name() -> String {
+    current_exe()
+        .ok()
+        .and_then(|p| {
+            p.file_name().map(|s| {
+                s.to_string_lossy()
+                    .strip_suffix(".exe")
+                    .unwrap_or(&s.to_string_lossy())
+                    .to_string()
+            })
+        })
+        .unwrap_or("superwhich".into())
+}
+
+fn run() -> Result<()> {
     let args = App::parse();
 
-    if args.pattern.is_empty() {
-        println!("Search pattern cannot be empty");
-        exit(1);
+    if args.pattern.trim().is_empty() {
+        return Err(anyhow!("search pattern cannot be empty"));
     }
 
     let color = Color::from(args.color);
-    let now = std::time::Instant::now();
-    let paths: Vec<PathBuf> = env::split_paths(&env::var_os("PATH").unwrap_or_else(|| {
-        println!("PATH is not defined in the environment.");
-        exit(1);
-    }))
-    .collect();
+    let now = Instant::now();
+    let paths: Vec<PathBuf> =
+        split_paths(&var_os("PATH").ok_or(anyhow!("PATH is not set"))?).collect();
+    let found = find_executables(
+        &paths,
+        &args.pattern,
+        args.threshold,
+        is_executable::IsExecutable::is_executable,
+    );
 
-    super_which(paths, args.pattern.to_lowercase(), args.threshold, color);
+    for exe in &found {
+        println!("{}", highlight_text(exe, &args.pattern, color, None));
+    }
+
     let elapsed = now.elapsed();
-
     if args.print_time {
         println!(
             "\nElapsed: {}",
-            format!("{:.3?}", elapsed).color(color).bold()
+            format!("{elapsed:.3?}").color(color).bold()
         );
     }
-}
 
-fn super_which(paths: Vec<PathBuf>, pattern: String, threshold: f64, color: colored::Color) {
-    let found: BTreeSet<PathInfo> = paths
-        .par_iter()
-        .fold(BTreeSet::new, |mut acc, path| {
-            if !path.exists() {
-                return acc;
-            }
-
-            for entry in fs::read_dir(path).unwrap() {
-                let entry = entry.unwrap();
-
-                if !entry.path().is_executable() {
-                    continue;
-                }
-
-                let name = entry.file_name().to_string_lossy().to_string();
-                let name_lower = name.to_lowercase();
-                if name_lower.contains(&pattern) || jaro_winkler(&name_lower, &pattern) >= threshold
-                {
-                    acc.insert(PathInfo {
-                        path_str: entry.path().to_string_lossy().to_string(),
-                        stem: entry.path().parent().unwrap().to_string_lossy().to_string(),
-                        name,
-                    });
-                }
-            }
-            acc
-        })
-        .reduce(BTreeSet::new, |mut a, b| {
-            a.extend(b);
-            a
-        });
-
-    for exe in found.iter() {
-        println!("{}", highlight_text(exe, &pattern, color));
-    }
-}
-
-fn highlight_text(info: &PathInfo, pattern: &str, color: colored::Color) -> String {
-    let index = info.name.to_lowercase().find(pattern).unwrap_or(usize::MAX);
-
-    if index == usize::MAX {
-        return info.path_str.to_string();
-    }
-
-    format!(
-        "{}{}{}{}{}",
-        info.stem,
-        MAIN_SEPARATOR,
-        info.name[..index].normal(),
-        info.name[index..index + pattern.len()].bold().color(color),
-        info.name[index + pattern.len()..].normal()
-    )
-}
-
-impl Ord for PathInfo {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.path_str
-            .cmp(&other.path_str)
-            .then_with(|| self.stem.cmp(&other.stem))
-            .then_with(|| self.name.cmp(&other.name))
-    }
-}
-
-impl PartialOrd for PathInfo {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
+    Ok(())
 }
