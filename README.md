@@ -4,10 +4,25 @@
 
 ## Installation
 
+## CLI
+
 - From [crates.io](https://crates.io/crates/superwhich): `cargo install superwhich`
 - From [GitHub](https://github.com/DarkCeptor44/superwhich): `cargo install --git https://github.com/DarkCeptor44/superwhich`
 - Manually (after cloning the repo locally): `cargo install --path .`
 - From [releases](https://github.com/DarkCeptor44/superwhich/releases/latest).
+
+## Library
+
+```bash
+cargo add superwhich
+```
+
+Or you can add this to your `Cargo.toml` file:
+
+```toml
+[dependencies]
+superwhich = "^2"
+```
 
 ## Usage
 
