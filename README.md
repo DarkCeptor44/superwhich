@@ -71,8 +71,8 @@ The CLI was benchmarked using [Hyperfine](https://github.com/sharkdp/hyperfine).
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `which lookfor` | 2.2 ± 0.2 | 1.9 | 3.7 | 1.00 |
-| `swhich lookfor` | 16.2 ± 0.3 | 15.7 | 17.1 | 7.21 ± 0.71 |
+| `which lookfor` | 3.0 ± 0.2 | 2.6 | 4.7 | 1.00 |
+| `swhich lookfor` | 17.6 ± 0.3 | 17.0 | 19.8 | 5.93 ± 0.43 |
 
 ## License
 
